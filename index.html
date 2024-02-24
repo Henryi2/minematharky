@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mine the Math</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #3498db; /* Cor do tabuleiro */
+            margin: 20px;
+            text-align: center;
+        }
+
+        header {
+            padding: 10px;
+            background-color: #ffffff; /* Cor de fundo do cabeçalho */
+            color: #3498db; /* Cor do texto do cabeçalho */
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        #game-container {
+            display: grid;
+            grid-template-columns: repeat(5, 50px);
+            grid-gap: 5px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 50px; /* Espaçamento superior para centralizar os quadrados */
+            background-color: #3498db; /* Cor do tabuleiro */
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .square {
+            width: 50px;
+            height: 50px;
+            background-color: #2ecc71; /* Cor dos quadrados */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #2ecc71; /* Cor dos emojis escondidos */
+            cursor: pointer;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            transition: background-color 0.3s;
+        }
+
+        .square:hover {
+            background-color: #27ae60; /* Cor dos quadrados ao passar o mouse */
+        }
+
+        #balance-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+
+        #balance {
+            font-weight: bold;
+            color: #ffffff;
+            padding: 5px 10px;
+            background-color: #f39c12; /* Cor de fundo da barra de saldo */
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        #message-container {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #e74c3c; /* Cor do texto de mensagem */
+        }
+
+        #counter {
+            margin-top: 10px;
+            color: #ffffff; /* Cor do texto do contador */
+        }
+
+        #chart-container {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #chart {
+            width: 200px;
+            height: 200px;
+            background-color: #3498db; /* Cor do gráfico */
+            border-radius: 50%;
+            position: relative;
+        }
+
+        #probability {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffffff; /* Cor do texto da probabilidade */
+        }
+
+        #copyright {
+            margin-top: 20px;
+            color: #bdc3c7; /* Cor do texto de direitos reservados */
+        }
+
+        #share-link {
+            display: block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #ffffff; /* Cor do texto do link de compartilhamento */
+        }
+
+        #share-link:hover {
+            text-decoration: underline;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #f39c12; /* Cor de fundo dos botões (laranja) */
+            color: #ffffff; /* Cor do texto dos botões */
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        button:hover {
+            background-color: #e67e22; /* Cor de fundo dos botões ao passar o mouse (laranja mais escura) */
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Mine the Math</h1>
+        <div id="balance-container">
+            <div id="balance">Saldo: R$ 100</div>
+        </div>
+    </header>
+
+    <div id="game-container"></div>
+
+    <div id="message-container"></div>
+
+    <div id="counter">Dinheiro acumulado: R$ 0</div>
+
+    <button onclick="startGame()">Iniciar 5$</button>
+    <button onclick="withdraw()">Sacar</button>
+
+    <div id="chart-container">
+        <div id="chart">
+            <div id="probability">50%</div>
+        </div>
+    </div>
+
+    <div id="copyright">
+        Copywright &copy; 2024 - Todos os direitos reservados
+    </div>
+
+    <a href="#" id="share-link">Compartilhe este jogo!</a>
+
+    <script>
+        let balance = 100;
+        let betAmount = 5;
+        let isClickable = true;
+        let accumulatedMoney = 0;
+
+        function startGame() {
+            // Lógica para iniciar o jogo
+            if (!isClickable || balance < betAmount) return;
+
+            balance -= betAmount;
+            updateBalance();
+
+            const gameContainer = document.getElementById('game-container');
+            gameContainer.innerHTML = '';
+            document.getElementById('message-container').textContent = ''; // Limpa a mensagem anterior
+
+            for (let i = 0; i < 25; i++) {
+                const square = document.createElement('div');
+                square.className = 'square';
+                square.setAttribute('data-index', i);
+
+                square.onclick = () => revealSquare(i);
+                gameContainer.appendChild(square);
+            }
+
+            updateProbabilityChart(50); // Inicializa o gráfico com 50% de chance
+        }
+
+        function revealSquare(index) {
+            const square = document.querySelector(`.square[data-index="${index}"]`);
+
+            // Lógica para revelar o conteúdo do quadrado
+            if (!isClickable || square.classList.contains('revealed')) return;
+
+            const isBomb = Math.random() < 0.5; // 50% de chance de ser bomba
+            if (isBomb) {
+                document.getElementById('message-container').textContent = 'Você Perdeu 🍀';
+                balance -= betAmount; // Subtrai apenas o valor apostado ao encontrar uma bomba
+                accumulatedMoney = 0; // Zera o dinheiro acumulado ao perder
+            } else {
+                balance += 1; // 1 real a mais ao encontrar um diamante
+                accumulatedMoney += 1;
+            }
+
+            square.textContent = isBomb ? '💣' : '💎';
+
+            square.classList.add('revealed');
+            updateBalance();
+
+            // Atualiza o contador de dinheiro acumulado
+            document.getElementById('counter').textContent = `Dinheiro acumulado: R$ ${accumulatedMoney.toFixed(2)}`;
+
+            // Atualiza o gráfico de probabilidade
+            updateProbabilityChart(isBomb ? 0 : 100);
+        }
+
+        function updateBalance() {
+            const balanceElement = document.getElementById('balance');
+            balanceElement.textContent = `Saldo: R$ ${balance.toFixed(2)}`;
+
+            if (balance <= 0) {
+                alert('Seu saldo acabou. Reinicie o jogo.');
+                balance = 100; // Reinicia o saldo
+                accumulatedMoney = 0; // Reinicia o dinheiro acumulado
+                updateBalance();
+            }
+        }
+
+        function withdraw() {
+            // Lógica para sacar
+            alert(`Você sacou R$ ${accumulatedMoney.toFixed(2)}`);
+            balance += accumulatedMoney;
+            accumulatedMoney = 0; // Zera o dinheiro acumulado ao sacar
+            updateBalance();
+        }
+
+        function updateProbabilityChart(probability) {
+            const probabilityElement = document.getElementById('probability');
+            probabilityElement.textContent = `${probability}%`;
+        }
+
+        // Lógica para gerar um link de compartilhamento (simulando um link real)
+        document.getElementById('share-link').addEventListener('click', function(event) {
+            event.preventDefault();
+            alert('Link para compartilhamento: http://seusite.com'); // Substitua com o link real do seu site
+        });
+    </script>
+
+</body>
+</html>
